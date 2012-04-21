@@ -1,0 +1,198 @@
+#!/bin/bash
+
+VERSION='0.1'
+
+## Text color variables
+txtund=$(tput sgr 0 1)    # Underline
+txtbld=$(tput bold)       # Bold
+txtred=$(tput setaf 1)    # Red
+txtgrn=$(tput setaf 2)    # Green
+txtylw=$(tput setaf 3)    # Yellow
+txtblu=$(tput setaf 4)    # Blue
+txtpur=$(tput setaf 5)    # Purple
+txtcyn=$(tput setaf 6)    # Cyan
+txtwht=$(tput setaf 7)    # White
+txtrst=$(tput sgr0)       # Text reset
+bldred=${txtbld}$(tput setaf 1) # Bold red
+bldgrn=${txtbld}$(tput setaf 2) # Bold green
+bldblu=${txtbld}$(tput setaf 4) # Bold blue
+bldpur=${txtbld}$(tput setaf 5) # Bold purple
+bldcyn=${txtbld}$(tput setaf 6) # Bold cyan
+bldwht=${txtbld}$(tput setaf 7) # Bold white
+info="${bldwht}* ${txtrst}"  # Feedback
+pass="${bldblu}* ${txtrst}"
+warn="${bldred}! ${txtrst}"
+
+function print_version {
+    echo "${bldred}sa-learn-and-report${txtrst} v${bldpur}$VERSION${txtrst}"
+    echo "Copyright 2012 ${bldgrn}Luc Didry${txtrst} <${bldgrn}luc@fiat-tux.fr${txtrst}>"
+}
+
+function print_usage {
+    print_version
+    cat << EOF
+
+Licensed under the ${bldpur}Apache License, Version 2.0${txtrst} (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+
+This script make sa-learn learn spam and ham from configured directories and mail
+a report with some stats
+
+Usage:
+    ${bldred}sa-learn-and-report${txtcyn} [-h|-?] [-v] [-p] [-l] [-c /path/to/configuration]${txtrst}
+        ${txtcyn}-h|-?${txtrst} print this help and exit
+        ${txtcyn}-v${txtrst}    print the version and exit
+        ${txtcyn}-p${txtrst}    print the report instead of mailing it
+        ${txtcyn}-l${txtrst}    don't run sa-learn but use the last report instead (see REPORTFILE)
+        ${txtcyn}-c${txtrst}    set the configuration file to use. Default is /etc/spamassassin/sa-learn-and-report.conf
+
+You need a valid configuration in order to sa-learn-and-report to work.
+Example of configuration:
+
+    ${txtylw}SPAMDIR${txtrst}="${txtgrn}/home/luc/Mail/Spam${txtrst}"           # [required]
+    ${txtylw}HAMDIR${txtrst}="${txtgrn}/home/luc/Mail/Ham${txtrst}"             # [required]
+    ${txtylw}SALEARN${txtrst}="${txtgrn}sa-learn${txtrst}"                      # [optional, this is the default]
+    ${txtylw}SALEARNOPTS${txtrst}="${txtgrn}${txtrst}"                          # [optional, this is the default]
+    ${txtylw}REPORTFILE${txtrst}="${txtgrn}/tmp/sa-learn.report${txtrst}"       # [optional, this is the default]
+    ${txtylw}CUSTOMSUBJECT${txtrst}="${txtgrn}[sa-learn] \$(hostname)${txtrst}"  # [optional, this is the default]
+    ${txtylw}MAILTO${txtrst}="${txtgrn}root@\$(hostname -f)${txtrst}"            # [optional, this is the default]
+    ${txtylw}MAILFROM${txtrst}="${txtgrn}root@\$(hostname -f)${txtrst}"          # [optional, this is the default]
+    ${txtylw}PRINTONLY${txtrst}=${txtgrn}0${txtrst}                             # [optional, this is the default]
+EOF
+}
+
+function need_conf {
+    cat << EOF
+You need a valid configuration in order to sa-learn-and-report to work.
+${info}Run ${bldred}sa-learn-and-report -h${txtrst} to see an example.
+EOF
+}
+## Variables initialization
+SALEARN="sa-learn"
+SALEARNOPTS=""
+REPORTFILE="/tmp/sa-learn.report"
+CUSTOMSUBJECT="[sa-learn] $(hostname)"
+MAILTO="root@$(hostname -f)"
+MAILFROM="root@$(hostname -f)"
+CONFIGURATION="/etc/spamassassin/sa-learn-and-report.conf"
+PRINTONLY=0
+USELASTREPORT=0
+
+## Get options
+while getopts  "vhlpc:" OPTION
+do
+    case $OPTION in
+        v)
+            print_version
+            exit 0
+            ;;
+        h)
+            print_usage
+            exit 0
+            ;;
+        l)
+            ## Don't run sa-learn but use the last report instead
+            USELASTREPORT=1
+            ;;
+        p)
+            ## Do not mail the result, print it to stdout
+            PRINTONLY=1
+            ;;
+        c)
+            ## Use an other configuration file
+            CONFIGURATION=$OPTARG
+            ;;
+        ?)
+            print_usage
+            exit 0
+            ;;
+    esac
+done
+
+## Test and read the configuration file
+if [ ! -e "$CONFIGURATION" ]
+then
+    echo "${warn}${bldred}$CONFIGURATION does not exist.${txtrst}"
+    need_conf
+    exit 1
+elif [ -r "$CONFIGURATION" ]
+then
+    . "$CONFIGURATION"
+    declare -A dirs
+    dirs['SPAMDIR']="$SPAMDIR"
+    dirs['HAMDIR']="$HAMDIR"
+    for i in "SPAMDIR" "HAMDIR"
+    do
+        if [ -z "${dirs[${i}]}" ]
+        then
+            echo "${warn}${bldred}$i is not set in $CONFIGURATION.${txtrst}"
+            need_conf
+            exit 1
+        fi
+        ## Here I got a strange behavior of -e, so I encapsulate a "test -e"
+        if [ ! $(test -e "${dirs[${i}]}"; echo $?) ]
+        then
+            echo "${warn}${bldred}${dirs[${i}]} does not exists.${txtrst}"
+            echo "Please provide a correct ${bldred}$i${txtrst}."
+            exit 1
+        fi
+    done
+    if [ ! -z "$SALEARNOPTS" ]
+    then
+        SALEARNOPTS=" $SALEARNOPTS"
+    fi
+else
+    echo "${warn}${bldred}$CONFIGURATION is not readable.${txtrst}"
+    echo "Please, check permissions."
+    exit 1
+fi
+
+if [ "$USELASTREPORT" -eq 0 ]
+then
+    ## Learn spam
+    echo -ne "Spam learning :\n    "           > "$REPORTFILE"
+    "$SALEARN""$SALEARNOPTS" --spam "$SPAMDIR" >> "$REPORTFILE"
+   
+    ## Learn ham
+    echo -ne "Ham learning :\n    "            >> "$REPORTFILE"
+    "$SALEARN""$SALEARNOPTS" --ham "$HAMDIR"   >> "$REPORTFILE"
+   
+    ## Give some stats
+    echo "Statistics :" >> "$REPORTFILE"
+    "$SALEARN"  --dump magic 2>/dev/null | while read line
+    do
+        case "$line" in
+            *nspam*)
+                echo -n "    Learned spam   : " >> "$REPORTFILE"
+                echo $line | awk '{print $3}'   >> "$REPORTFILE"
+                ;;
+            *nham*)
+                echo -n "    Learned ham    : " >> "$REPORTFILE"
+                echo $line | awk '{print $3}'   >> "$REPORTFILE"
+                ;;
+            *ntokens*)
+                echo -n "    Learned tokens : " >> "$REPORTFILE"
+                echo $line | awk '{print $3}'   >> "$REPORTFILE"
+                ;;
+         esac
+    done
+fi
+
+if [ "$PRINTONLY" -eq 1 ]
+then
+    cat "$REPORTFILE"
+elif [ "$PRINTONLY" -eq 0 ]
+then
+    cat "$REPORTFILE" | mail -s "$CUSTOMSUBJECT" "$MAILTO" -- -r "$MAILFROM"
+fi
+
+exit $?
