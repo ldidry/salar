@@ -1,0 +1,6 @@
+Version 0.2
+ * Bug fix ($TERM and tput)
+ * Add print license option
+
+Version 0.1
+ * First public release

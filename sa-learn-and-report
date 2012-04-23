@@ -1,6 +1,11 @@
 #!/bin/bash
 
-VERSION='0.1'
+VERSION='0.2'
+
+if [ "$TERM" == 'dumb' ]
+then
+    export TERM='rxvt'
+fi
 
 ## Text color variables
 txtund=$(tput sgr 0 1)    # Underline
@@ -24,11 +29,15 @@ pass="${bldblu}* ${txtrst}"
 warn="${bldred}! ${txtrst}"
 
 function print_version {
-    echo "${bldred}sa-learn-and-report${txtrst} v${bldpur}$VERSION${txtrst}"
-    echo "Copyright 2012 ${bldgrn}Luc Didry${txtrst} <${bldgrn}luc@fiat-tux.fr${txtrst}>"
+    cat << EOF
+${bldred}sa-learn-and-report${txtrst} v$VERSION
+Copyright 2012 Luc Didry <luc@fiat-tux.fr>
+
+You can find the last version at http://dev.fiat-tux.fr/
+EOF
 }
 
-function print_usage {
+function print_license {
     print_version
     cat << EOF
 
@@ -43,17 +52,24 @@ distributed under the License is distributed on an "AS IS" BASIS,
 WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
+EOF
+}
+
+function print_usage {
+    print_version
+    cat << EOF
 
 This script make sa-learn learn spam and ham from configured directories and mail
 a report with some stats
 
 Usage:
-    ${bldred}sa-learn-and-report${txtcyn} [-h|-?] [-v] [-p] [-l] [-c /path/to/configuration]${txtrst}
-        ${txtcyn}-h|-?${txtrst} print this help and exit
-        ${txtcyn}-v${txtrst}    print the version and exit
-        ${txtcyn}-p${txtrst}    print the report instead of mailing it
-        ${txtcyn}-l${txtrst}    don't run sa-learn but use the last report instead (see REPORTFILE)
-        ${txtcyn}-c${txtrst}    set the configuration file to use. Default is /etc/spamassassin/sa-learn-and-report.conf
+    ${bldred}sa-learn-and-report${txtcyn} [-h] [-v] [-l] [-p] [-r] [-c /path/to/configuration]${txtrst}
+        ${txtcyn}-h${txtrst} print this help and exit
+        ${txtcyn}-v${txtrst} print the version and exit
+        ${txtcyn}-l${txtrst} print the license and exit
+        ${txtcyn}-p${txtrst} print the report instead of mailing it
+        ${txtcyn}-r${txtrst} don't run sa-learn but use the last report instead (see REPORTFILE)
+        ${txtcyn}-c${txtrst} set the configuration file to use. Default is /etc/spamassassin/sa-learn-and-report.conf
 
 You need a valid configuration in order to sa-learn-and-report to work.
 Example of configuration:
@@ -88,24 +104,28 @@ PRINTONLY=0
 USELASTREPORT=0
 
 ## Get options
-while getopts  "vhlpc:" OPTION
+while getopts  "hvlprc:" OPTION
 do
     case $OPTION in
-        v)
-            print_version
-            exit 0
-            ;;
         h)
             print_usage
             exit 0
             ;;
+        v)
+            print_version
+            exit 0
+            ;;
         l)
-            ## Don't run sa-learn but use the last report instead
-            USELASTREPORT=1
+            print_license
+            exit 0
             ;;
         p)
             ## Do not mail the result, print it to stdout
             PRINTONLY=1
+            ;;
+        r)
+            ## Don't run sa-learn but use the last report instead
+            USELASTREPORT=1
             ;;
         c)
             ## Use an other configuration file
