@@ -1,6 +1,6 @@
 #!/bin/bash
 
-VERSION='0.2'
+VERSION='0.3'
 
 if [ "$TERM" == 'dumb' ]
 then
@@ -82,6 +82,7 @@ Example of configuration:
     ${txtylw}CUSTOMSUBJECT${txtrst}="${txtgrn}[sa-learn] \$(hostname)${txtrst}"  # [optional, this is the default]
     ${txtylw}MAILTO${txtrst}="${txtgrn}root@\$(hostname -f)${txtrst}"            # [optional, this is the default]
     ${txtylw}MAILFROM${txtrst}="${txtgrn}root@\$(hostname -f)${txtrst}"          # [optional, this is the default]
+    ${txtylw}MAILFULLFROM${txtrst}="${txtgrn}root@\$(hostname -f)${txtrst}"      # [optional, this is the default]
     ${txtylw}PRINTONLY${txtrst}=${txtgrn}0${txtrst}                             # [optional, this is the default]
 EOF
 }
@@ -99,6 +100,7 @@ REPORTFILE="/tmp/sa-learn.report"
 CUSTOMSUBJECT="[sa-learn] $(hostname)"
 MAILTO="root@$(hostname -f)"
 MAILFROM="root@$(hostname -f)"
+MAILFULLFROM="root@$(hostname -f)"
 CONFIGURATION="/etc/spamassassin/sa-learn-and-report.conf"
 PRINTONLY=0
 USELASTREPORT=0
@@ -212,7 +214,7 @@ then
     cat "$REPORTFILE"
 elif [ "$PRINTONLY" -eq 0 ]
 then
-    cat "$REPORTFILE" | mail -s "$CUSTOMSUBJECT" "$MAILTO" -- -r "$MAILFROM"
+    cat "$REPORTFILE" | mail -s "$CUSTOMSUBJECT" "$MAILTO" -- -r "$MAILFROM" -F "$MAILFULLFROM"
 fi
 
 exit $?

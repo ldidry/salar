@@ -1,3 +1,6 @@
+Version 0.3
+ * Add an option to change sender's name (not only his address)
+
 Version 0.2
  * Bug fix ($TERM and tput)
  * Add print license option
