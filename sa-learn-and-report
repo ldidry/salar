@@ -1,36 +1,10 @@
 #!/bin/bash
 
-VERSION='0.3'
-
-if [ "$TERM" == 'dumb' ]
-then
-    export TERM='rxvt'
-fi
-
-## Text color variables
-txtund=$(tput sgr 0 1)    # Underline
-txtbld=$(tput bold)       # Bold
-txtred=$(tput setaf 1)    # Red
-txtgrn=$(tput setaf 2)    # Green
-txtylw=$(tput setaf 3)    # Yellow
-txtblu=$(tput setaf 4)    # Blue
-txtpur=$(tput setaf 5)    # Purple
-txtcyn=$(tput setaf 6)    # Cyan
-txtwht=$(tput setaf 7)    # White
-txtrst=$(tput sgr0)       # Text reset
-bldred=${txtbld}$(tput setaf 1) # Bold red
-bldgrn=${txtbld}$(tput setaf 2) # Bold green
-bldblu=${txtbld}$(tput setaf 4) # Bold blue
-bldpur=${txtbld}$(tput setaf 5) # Bold purple
-bldcyn=${txtbld}$(tput setaf 6) # Bold cyan
-bldwht=${txtbld}$(tput setaf 7) # Bold white
-info="${bldwht}* ${txtrst}"  # Feedback
-pass="${bldblu}* ${txtrst}"
-warn="${bldred}! ${txtrst}"
+VERSION='0.4'
 
 function print_version {
     cat << EOF
-${bldred}sa-learn-and-report${txtrst} v$VERSION
+sa-learn-and-report v$VERSION
 Copyright 2012 Luc Didry <luc@fiat-tux.fr>
 
 You can find the last version at http://dev.fiat-tux.fr/
@@ -41,7 +15,7 @@ function print_license {
     print_version
     cat << EOF
 
-Licensed under the ${bldpur}Apache License, Version 2.0${txtrst} (the "License");
+Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
 You may obtain a copy of the License at
 
@@ -63,34 +37,34 @@ This script make sa-learn learn spam and ham from configured directories and mai
 a report with some stats
 
 Usage:
-    ${bldred}sa-learn-and-report${txtcyn} [-h] [-v] [-l] [-p] [-r] [-c /path/to/configuration]${txtrst}
-        ${txtcyn}-h${txtrst} print this help and exit
-        ${txtcyn}-v${txtrst} print the version and exit
-        ${txtcyn}-l${txtrst} print the license and exit
-        ${txtcyn}-p${txtrst} print the report instead of mailing it
-        ${txtcyn}-r${txtrst} don't run sa-learn but use the last report instead (see REPORTFILE)
-        ${txtcyn}-c${txtrst} set the configuration file to use. Default is /etc/spamassassin/sa-learn-and-report.conf
+    sa-learn-and-report [-h] [-v] [-l] [-p] [-r] [-c /path/to/configuration]
+        -h print this help and exit
+        -v print the version and exit
+        -l print the license and exit
+        -p print the report instead of mailing it
+        -r don't run sa-learn but use the last report instead (see REPORTFILE)
+        -c set the configuration file to use. Default is /etc/spamassassin/sa-learn-and-report.conf
 
 You need a valid configuration in order to sa-learn-and-report to work.
 Example of configuration:
 
-    ${txtylw}SPAMDIR${txtrst}="${txtgrn}/home/luc/Mail/Spam${txtrst}"           # [required]
-    ${txtylw}HAMDIR${txtrst}="${txtgrn}/home/luc/Mail/Ham${txtrst}"             # [required]
-    ${txtylw}SALEARN${txtrst}="${txtgrn}sa-learn${txtrst}"                      # [optional, this is the default]
-    ${txtylw}SALEARNOPTS${txtrst}="${txtgrn}${txtrst}"                          # [optional, this is the default]
-    ${txtylw}REPORTFILE${txtrst}="${txtgrn}/tmp/sa-learn.report${txtrst}"       # [optional, this is the default]
-    ${txtylw}CUSTOMSUBJECT${txtrst}="${txtgrn}[sa-learn] \$(hostname)${txtrst}"  # [optional, this is the default]
-    ${txtylw}MAILTO${txtrst}="${txtgrn}root@\$(hostname -f)${txtrst}"            # [optional, this is the default]
-    ${txtylw}MAILFROM${txtrst}="${txtgrn}root@\$(hostname -f)${txtrst}"          # [optional, this is the default]
-    ${txtylw}MAILFULLFROM${txtrst}="${txtgrn}root@\$(hostname -f)${txtrst}"      # [optional, this is the default]
-    ${txtylw}PRINTONLY${txtrst}=${txtgrn}0${txtrst}                             # [optional, this is the default]
+    SPAMDIR="/home/luc/Mail/Spam"           # [required]
+    HAMDIR="/home/luc/Mail/Ham"             # [required]
+    SALEARN="sa-learn"                      # [optional, this is the default]
+    SALEARNOPTS=""                          # [optional, this is the default]
+    REPORTFILE="/tmp/sa-learn.report"       # [optional, this is the default]
+    CUSTOMSUBJECT="[sa-learn] \$(hostname)"  # [optional, this is the default]
+    MAILTO="root@\$(hostname -f)"            # [optional, this is the default]
+    MAILFROM="root@\$(hostname -f)"          # [optional, this is the default]
+    MAILFULLFROM="root@\$(hostname -f)"      # [optional, this is the default]
+    PRINTONLY=0                             # [optional, this is the default]
 EOF
 }
 
 function need_conf {
     cat << EOF
 You need a valid configuration in order to sa-learn-and-report to work.
-${info}Run ${bldred}sa-learn-and-report -h${txtrst} to see an example.
+Run sa-learn-and-report -h to see an example.
 EOF
 }
 ## Variables initialization
@@ -143,7 +117,7 @@ done
 ## Test and read the configuration file
 if [ ! -e "$CONFIGURATION" ]
 then
-    echo "${warn}${bldred}$CONFIGURATION does not exist.${txtrst}"
+    echo "$CONFIGURATION does not exist."
     need_conf
     exit 1
 elif [ -r "$CONFIGURATION" ]
@@ -156,15 +130,15 @@ then
     do
         if [ -z "${dirs[${i}]}" ]
         then
-            echo "${warn}${bldred}$i is not set in $CONFIGURATION.${txtrst}"
+            echo "$i is not set in $CONFIGURATION."
             need_conf
             exit 1
         fi
         ## Here I got a strange behavior of -e, so I encapsulate a "test -e"
         if [ ! $(test -e "${dirs[${i}]}"; echo $?) ]
         then
-            echo "${warn}${bldred}${dirs[${i}]} does not exists.${txtrst}"
-            echo "Please provide a correct ${bldred}$i${txtrst}."
+            echo "${dirs[${i}]} does not exists."
+            echo "Please provide a correct $i."
             exit 1
         fi
     done
@@ -173,7 +147,7 @@ then
         SALEARNOPTS=" $SALEARNOPTS"
     fi
 else
-    echo "${warn}${bldred}$CONFIGURATION is not readable.${txtrst}"
+    echo "$CONFIGURATION is not readable."
     echo "Please, check permissions."
     exit 1
 fi

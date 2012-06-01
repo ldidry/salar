@@ -1,3 +1,7 @@
+Version 0.4
+ * Remove all these stupid colors in terminal output
+   This is not a term-based nyancat
+
 Version 0.3
  * Add an option to change sender's name (not only his address)
 
