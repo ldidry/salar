@@ -1,10 +1,10 @@
 #!/bin/bash
 
-VERSION='0.4'
+VERSION='0.5'
 
 function print_version {
     cat << EOF
-sa-learn-and-report v$VERSION
+salar v$VERSION
 Copyright 2012 Luc Didry <luc@fiat-tux.fr>
 
 You can find the last version at http://dev.fiat-tux.fr/
@@ -34,18 +34,18 @@ function print_usage {
     cat << EOF
 
 This script make sa-learn learn spam and ham from configured directories and mail
-a report with some stats
+a report with some stats. Salar means "sa-learn and report"
 
 Usage:
-    sa-learn-and-report [-h] [-v] [-l] [-p] [-r] [-c /path/to/configuration]
+    salar [-h] [-v] [-l] [-p] [-r] [-c /path/to/configuration]
         -h print this help and exit
         -v print the version and exit
         -l print the license and exit
         -p print the report instead of mailing it
         -r don't run sa-learn but use the last report instead (see REPORTFILE)
-        -c set the configuration file to use. Default is /etc/spamassassin/sa-learn-and-report.conf
+        -c set the configuration file to use. Default is /etc/spamassassin/salar.conf
 
-You need a valid configuration in order to sa-learn-and-report to work.
+You need a valid configuration in order to salar to work.
 Example of configuration:
 
     SPAMDIR="/home/luc/Mail/Spam"           # [required]
@@ -53,7 +53,7 @@ Example of configuration:
     SALEARN="sa-learn"                      # [optional, this is the default]
     SALEARNOPTS=""                          # [optional, this is the default]
     REPORTFILE="/tmp/sa-learn.report"       # [optional, this is the default]
-    CUSTOMSUBJECT="[sa-learn] \$(hostname)"  # [optional, this is the default]
+    CUSTOMSUBJECT="[salar] \$(hostname)"  # [optional, this is the default]
     MAILTO="root@\$(hostname -f)"            # [optional, this is the default]
     MAILFROM="root@\$(hostname -f)"          # [optional, this is the default]
     MAILFULLFROM="root@\$(hostname -f)"      # [optional, this is the default]
@@ -63,19 +63,19 @@ EOF
 
 function need_conf {
     cat << EOF
-You need a valid configuration in order to sa-learn-and-report to work.
-Run sa-learn-and-report -h to see an example.
+You need a valid configuration in order to salar to work.
+Run salar -h to see an example.
 EOF
 }
 ## Variables initialization
 SALEARN="sa-learn"
 SALEARNOPTS=""
 REPORTFILE="/tmp/sa-learn.report"
-CUSTOMSUBJECT="[sa-learn] $(hostname)"
+CUSTOMSUBJECT="[salar] $(hostname)"
 MAILTO="root@$(hostname -f)"
 MAILFROM="root@$(hostname -f)"
 MAILFULLFROM="root@$(hostname -f)"
-CONFIGURATION="/etc/spamassassin/sa-learn-and-report.conf"
+CONFIGURATION="/etc/spamassassin/salar.conf"
 PRINTONLY=0
 USELASTREPORT=0
 

@@ -1,3 +1,6 @@
+Version 0.5
+ * Renaming sa-learn-and-report to salar
+
 Version 0.4
  * Remove all these stupid colors in terminal output
    This is not a term-based nyancat
