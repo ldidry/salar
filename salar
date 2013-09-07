@@ -188,7 +188,7 @@ then
     cat "$REPORTFILE"
 elif [ "$PRINTONLY" -eq 0 ]
 then
-    cat "$REPORTFILE" | mail -s "$CUSTOMSUBJECT" "$MAILTO" -- -r "$MAILFROM" -F "$MAILFULLFROM"
+    cat "$REPORTFILE" | mail -s "$CUSTOMSUBJECT" -r "$MAILFROM" "$MAILTO"
 fi
 
 exit $?
