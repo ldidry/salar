@@ -7,7 +7,10 @@ Put the script somewhere, create a configuration file and run the script
 directly or from a crontab. See salar -h for more infos.
 
 Example for cron, in /etc/cron.d/salar:
+
+```bash
 42 2 * * * root /usr/local/bin/salar
+```
 
 ##Dependancies
 Well, sa-learn and that's all !

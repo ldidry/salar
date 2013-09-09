@@ -1,6 +1,6 @@
 #!/bin/bash
 
-VERSION='0.5'
+VERSION='0.6'
 
 function print_version {
     cat << EOF
@@ -50,13 +50,13 @@ Example of configuration:
 
     SPAMDIR="/home/luc/Mail/Spam"           # [required]
     HAMDIR="/home/luc/Mail/Ham"             # [required]
-    SALEARN="sa-learn"                      # [optional, this is the default]
-    SALEARNOPTS=""                          # [optional, this is the default]
-    REPORTFILE="/tmp/sa-learn.report"       # [optional, this is the default]
-    CUSTOMSUBJECT="[salar] \$(hostname)"  # [optional, this is the default]
-    MAILTO="root@\$(hostname -f)"            # [optional, this is the default]
-    MAILFROM="root@\$(hostname -f)"          # [optional, this is the default]
-    MAILFULLFROM="root@\$(hostname -f)"      # [optional, this is the default]
+    SALARN="sa-learn"                       # [optional, this is the default]
+    SALARNOPTS=""                           # [optional, this is the default]
+    REPORTFILE="/tmp/salar.report"          # [optional, this is the default]
+    CUSTOMSUBJECT="[salar] \$(hostname)"    # [optional, this is the default]
+    MAILTO="root@\$(hostname -f)"           # [optional, this is the default]
+    MAILFROM="root@\$(hostname -f)"         # [optional, this is the default]
+    MAILFULLFROM="root@\$(hostname -f)"     # [optional, this is the default]
     PRINTONLY=0                             # [optional, this is the default]
 EOF
 }
@@ -68,9 +68,9 @@ Run salar -h to see an example.
 EOF
 }
 ## Variables initialization
-SALEARN="sa-learn"
-SALEARNOPTS=""
-REPORTFILE="/tmp/sa-learn.report"
+SALARN="sa-learn"
+SALARNOPTS=""
+REPORTFILE="/tmp/salar.report"
 CUSTOMSUBJECT="[salar] $(hostname)"
 MAILTO="root@$(hostname -f)"
 MAILFROM="root@$(hostname -f)"
@@ -142,9 +142,9 @@ then
             exit 1
         fi
     done
-    if [ ! -z "$SALEARNOPTS" ]
+    if [ ! -z "$SALARNOPTS" ]
     then
-        SALEARNOPTS=" $SALEARNOPTS"
+        SALARNOPTS=" $SALARNOPTS"
     fi
 else
     echo "$CONFIGURATION is not readable."
@@ -155,16 +155,16 @@ fi
 if [ "$USELASTREPORT" -eq 0 ]
 then
     ## Learn spam
-    echo -ne "Spam learning :\n    "           > "$REPORTFILE"
-    "$SALEARN""$SALEARNOPTS" --spam "$SPAMDIR" >> "$REPORTFILE"
-   
+    echo -ne "Spam learning :\n    "         > "$REPORTFILE"
+    "$SALARN""$SALARNOPTS" --spam "$SPAMDIR" >> "$REPORTFILE"
+
     ## Learn ham
-    echo -ne "Ham learning :\n    "            >> "$REPORTFILE"
-    "$SALEARN""$SALEARNOPTS" --ham "$HAMDIR"   >> "$REPORTFILE"
-   
+    echo -ne "Ham learning :\n    "          >> "$REPORTFILE"
+    "$SALARN""$SALARNOPTS" --ham "$HAMDIR"   >> "$REPORTFILE"
+
     ## Give some stats
     echo "Statistics :" >> "$REPORTFILE"
-    "$SALEARN"  --dump magic 2>/dev/null | while read line
+    "$SALARN"  --dump magic 2>/dev/null | while read line
     do
         case "$line" in
             *nspam*)
@@ -188,7 +188,7 @@ then
     cat "$REPORTFILE"
 elif [ "$PRINTONLY" -eq 0 ]
 then
-    cat "$REPORTFILE" | mail -s "$CUSTOMSUBJECT" "$MAILTO" -- -r "$MAILFROM" -F "$MAILFULLFROM"
+    cat "$REPORTFILE" | mail -s "$CUSTOMSUBJECT" -r "$MAILFROM" "$MAILTO"
 fi
 
 exit $?
